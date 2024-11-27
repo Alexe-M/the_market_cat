@@ -1,0 +1,26 @@
+<%=render 'layouts/navbar' %>
+
+<div class="article-show-container">
+  <!-- Image du produit -->
+  <div class="article-image">
+    <%= image_tag("chattest.png", alt: @article.name) %>
+  </div>
+
+  <!-- Détails du produit -->
+  <div class="article-details">
+    <p class="article-name-show"><%= @article.name %></p>
+    <p class="article-description"><%= @article.description %></p>
+  
+    <div class="article-price">
+      <span><%= @article.price %>€</span>
+    </div>
+  
+    <div class="article-btn">
+      <%= button_to 'Ajouter au panier', add_article_to_cart_cart_path(article_id: @article.id), method: :post, class: 'btn btn-primary' %>
+    </div>
+  </div>
+</div>
+
+<div class="render_footer">
+  <%=render 'layouts/footer' %>
+</div>

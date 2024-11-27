@@ -8,53 +8,107 @@
 #     MovieGenre.find_or_create_by!(name: genre_name)
 #   end
 
+require 'faker'
 
-# db/seeds.rb
+# Clean the database
+User.destroy_all
+Article.destroy_all
+Cart.destroy_all
+CartItem.destroy_all
+Order.destroy_all
+OrderItem.destroy_all
 
-Article.create!(
-  name: "Montre connectée",
-  description: "Une montre connectée avec suivi de la santé et notifications en temps réel.",
-  price: 149.99
-)
+puts "Database cleaned!"
 
-Article.create!(
-  name: "Casque audio",
-  description: "Un casque sans fil offrant un son de haute qualité et une réduction active du bruit.",
-  price: 89.99
-)
+# Create administrators
+puts "Creating administrators..."
+admin_emails = [
+  "alexemarichal@hotmail.fr",
+  "p.moulin.95@gmail.com",
+  "triboutflorian@gmail.com",
+  "linepro.olivier@gmail.com",
+  "jamesbarthee@gmail.com"
+]
 
-Article.create!(
-  name: "Tapis de yoga",
-  description: "Un tapis de yoga antidérapant, parfait pour les séances à domicile ou en studio.",
-  price: 25.50
-)
+admin_emails.each do |email|
+  User.create!(
+    email: email,
+    password: "password123",
+    is_admin: true
+  )
+end
+puts "#{admin_emails.size} administrators created!"
 
-Article.create!(
-  name: "Sac à dos de randonnée",
-  description: "Sac à dos de 30 litres, imperméable et durable, idéal pour les randonnées longues.",
-  price: 54.75
-)
+# Create regular users
+puts "Creating regular users..."
+10.times do 
+  User.create!(
+    email: Faker::Internet.unique.email(domain: "example.fr"),
+    password: "password123",
+    is_admin: false
+  )
+end
+puts "10 regular users created!"
 
-Article.create!(
-  name: "Clavier mécanique",
-  description: "Clavier mécanique RGB avec switchs personnalisables pour les gamers.",
-  price: 119.99
-)
+# Create articles (photos of cats)
+puts "Creating articles..."
+30.times do 
+  cat_name = Faker::Creature::Cat.name
+  cat_breed = Faker::Creature::Cat.breed
+  cat_characteristic = Faker::Creature::Cat.registry
+  description = "A magnificent #{cat_breed} cat, known for its #{cat_characteristic.downcase}. #{cat_name} is ready to capture your heart through this unique photo."
 
-Article.create!(
-  name: "Drone compact",
-  description: "Un drone compact avec caméra HD, idéal pour capturer des moments uniques.",
-  price: 299.00
-)
+  Article.create!(
+    name: "Photo of #{cat_name}",
+    description: description,
+    price: Faker::Commerce.price(range: 5.0..30.0)
+  )
+end
+puts "30 articles created!"
 
-Article.create!(
-  name: "Bouilloire électrique",
-  description: "Bouilloire rapide en acier inoxydable avec arrêt automatique pour plus de sécurité.",
-  price: 34.95
-)
+# Create past orders
+puts "Creating past orders..."
+10.times do 
+  user = User.where(is_admin: false).sample
+  order = Order.create!(
+    user_id: user.id,
+    total_price: 0,
+    status: "paid",
+    stripe_customer_id: Faker::Number.unique.number(digits: 10)
+  )
+  # Add items to the order
+  2.upto(5).to_a.sample.times do
+    article = Article.all.sample
+    quantity = 1
+    price = article.price
+    order.order_items.create!(
+      article_id: article.id,
+      quantity: quantity,
+      price: price
+    )
+    order.total_price += price * quantity
+  end
+  order.save!
+end
+puts "10 past orders created!"
 
-Article.create!(
-  name: "Lampe de bureau LED",
-  description: "Lampe LED réglable avec plusieurs niveaux de luminosité et port USB intégré.",
-  price: 39.99
-)
+# Create active carts
+puts "Creating active carts..."
+5.times do
+  user = User.where(is_admin: false).sample
+  cart = Cart.create!(
+    user_id: user.id
+  )
+  # Add items to the cart
+  2.upto(5).to_a.sample.times do
+    article = Article.all.sample
+    quantity = 1
+    cart.cart_items.create!(
+      article_id: article.id,
+      quantity: quantity
+    )
+  end
+end
+puts "5 active carts created!"
+
+puts "Seed successfully completed!"
